@@ -1,5 +1,24 @@
 #include "board.hpp"
 
+
+
+
+
+// to peek into asm with godbolt
+State<6,5> test(State<6,5> state, board_t<6,5> add) {
+    state.addBomb<0>(add);
+	return state;
+}
+
+
+template<typename T>
+constexpr void assert_equal(T a, T b) {
+	if (a != b) {
+		std::cout << a << " != " << b << std::endl;
+		throw std::runtime_error("assertion failed");
+	}
+}
+
 int main(int, char**) {
 	auto state = defaultState<6,5>;
 	state.addBomb<1>(1ULL << (13 * 2));	assert_equal(state, State<6,5>::parse("000000000000000010000000000000", "000000000000000010000000000000"));

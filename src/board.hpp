@@ -77,7 +77,7 @@ struct State {
 	}
 
 	template<bool PLAYER>
-	void addBomb(board_t<W,H> add);
+	constexpr void addBomb(board_t<W,H> add);
 };
 
 template<size_t W, size_t H>
@@ -88,6 +88,7 @@ struct BoardPrinter {
 
 template<size_t W, size_t H>
 std::ostream& operator<<(std::ostream& os, const BoardPrinter<W,H>& board) {
+	os << std::endl;
 	for (size_t i = H; i-- > 0; ) {
 		for (size_t j = W; j-- > 0; )
 			os << (((board.value) >> (i * W * 2 + j * 2)) & 0b11);
@@ -98,7 +99,7 @@ std::ostream& operator<<(std::ostream& os, const BoardPrinter<W,H>& board) {
 template<size_t W, size_t H>
 std::ostream& operator<<(std::ostream& os, const State<W,H>& state) {
 	os << BoardPrinter<W,H>{ state.board - defaultBoard<W,H> };
-	os << "board / players" << std::endl;
+	os << "board / players";
 	return os << BoardPrinter<W,H>{ state.players & MASK_PLAYER<W,H> };
 }
 template<size_t W, size_t H>
@@ -137,7 +138,7 @@ constexpr board_t<W,H> CELLS_UP_DOWN = [](){
 
 
 template<size_t W, size_t H>
-inline board_t<W,H> addOne(board_t<W,H>& board, board_t<W,H> add) {
+constexpr inline board_t<W,H> addOne(board_t<W,H>& board, board_t<W,H> add) {
 	board_t<W,H> exploding = board & (board >> 1) & add;
 	// can overflow
 	board += add - (exploding << 2);
@@ -145,16 +146,16 @@ inline board_t<W,H> addOne(board_t<W,H>& board, board_t<W,H> add) {
 }
 
 template <size_t W, size_t H>
-inline void resetEdges(board_t<W,H>& board, board_t<W,H> exploding) {
+constexpr inline void resetEdges(board_t<W,H>& board, board_t<W,H> exploding) {
 	board += (exploding & CELLS_LEFT_RIGHT<W,H>) + (exploding & CELLS_UP_DOWN<W,H>);
 }
 
 
 template<size_t W, size_t H>
 template<bool PLAYER>
-inline void State<W,H>::addBomb(board_t<W,H> add) {
+constexpr inline void State<W,H>::addBomb(board_t<W,H> add) {
 	if constexpr (LOG_EXPLOSIONS)
-		std::cout << "adding bomb for player " << PLAYER << std::endl << *this << std::endl << BoardPrinter<W,H>(add) << std::endl;
+		std::cout << "adding bomb for player " << PLAYER << *this << BoardPrinter<W,H>(add);
 	if (PLAYER)
 		players = ~players;
 	players &= MASK_PLAYER<W,H> & (board | (board >> 1));
@@ -163,7 +164,7 @@ inline void State<W,H>::addBomb(board_t<W,H> add) {
 	resetEdges<W,H>(board, exploding);
 	while (exploding) {
 		if constexpr (LOG_EXPLOSIONS)
-			std::cout << BoardPrinter<W,H>(board) << std::endl << BoardPrinter<W,H>(exploding) << std::endl;
+			std::cout << BoardPrinter<W,H>(board) << BoardPrinter<W,H>(exploding) << std::endl;
 		if (!(players &= ~exploding)) {
 			if constexpr (LOG_EXPLOSIONS)
 				std::cout << "Game win condition" << std::endl;
@@ -179,19 +180,4 @@ inline void State<W,H>::addBomb(board_t<W,H> add) {
 
 	if (PLAYER)
 		players = ~players;
-}
-
-
-template<typename T>
-void assert_equal(T a, T b) {
-	if (a != b) {
-		std::cout << a << std::endl;
-		std::cout << b << std::endl;
-		throw std::runtime_error("assertion failed");
-	}
-}
-
-State<6,5> test(State<6,5> state, board_t<6,5> add) {
-    state.addBomb<0>(add);
-	return state;
 }
