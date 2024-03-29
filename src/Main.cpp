@@ -1,18 +1,16 @@
 #include <array>
 #include <iostream>
-#include "x86intrin.h"
-#include <xmmintrin.h>
 #include <bitset>
 #include <type_traits>
 #include <cstdint>
 #include <cassert>
 #include <numeric>
-#include <string>
+#include <string_view>
 
 
 
 
-constexpr bool LOG_EXPLOSIONS = true;
+constexpr bool LOG_EXPLOSIONS = false;
 
 
 template<size_t W, size_t H>
@@ -20,7 +18,7 @@ requires(W * H * 2 <= 64 && W * H * 2 > 32)
 using board_t = uint64_t;
 
 template<size_t W, size_t H>
-constexpr board_t<W,H> parseBoard(std::string str, int offset) {
+constexpr board_t<W,H> parseBoard(std::string_view str, int offset) {
 	board_t<W,H> result = 0;
 	for (size_t i = 0; i < str.size(); ++i) {
 		board_t<W,H> c = str[i] - '0';
@@ -66,7 +64,7 @@ struct State {
 	board_t<W,H> board;
 	board_t<W,H> players;
 
-	constexpr static State parse(std::string board, std::string players) {
+	constexpr static State parse(std::string_view board, std::string_view players) {
 		return State{ parseBoard<W,H>(board, 0) + defaultBoard<W,H>, parseBoard<W,H>(players, 1) | defaultPlayers<W,H> };
 	}
 
@@ -162,7 +160,8 @@ inline State<W,H> addBomb(State<W,H> state, board_t<W,H> add) {
 		if constexpr (LOG_EXPLOSIONS)
 			std::cout << BoardPrinter<W,H>(state.board) << std::endl << BoardPrinter<W,H>(exploding) << std::endl;
 		if (!(state.players &= ~exploding)) {
-			std::cout << "Game win condition" << std::endl;
+			if constexpr (LOG_EXPLOSIONS)
+				std::cout << "Game win condition" << std::endl;
 			break;
 		}
 		board_t<W,H> oldExploding = exploding;
@@ -189,7 +188,7 @@ void assert_equal(T&& a, T& b) {
 }
 
 State<6,5> test(State<6,5>& state, board_t<6,5> add) {
-    return addBomb<1>(state, add);
+    return addBomb<0>(state, add);
 }
 
 
@@ -249,6 +248,6 @@ int main(int, char**) {
 	assert_equal(State<6,5>::parse("112120212311223312223232102221", "000000000000000000100000000000"), state = addBomb<0>(state, 1ULL << (20 * 2)));
 	assert_equal(State<6,5>::parse("022120122311133312233232012221", "010000110000110000110000010000"), state = addBomb<1>(state, 1ULL << (11 * 2)));
 	// game ends with player 0 putting at cellid 3
-	assert_equal(~0ULL, (state = addBomb<1>(state, 1ULL << (3 * 2))).players);
+	assert_equal<board_t<6,5>>(~0ULL, (state = addBomb<1>(state, 1ULL << (3 * 2))).players);
 	std::cout << "All tests passed" << std::endl;
 }
