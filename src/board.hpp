@@ -157,7 +157,7 @@ constexpr inline void State<W,H>::place(board_t<W,H> add) {
 	if constexpr (LOG_EXPLOSIONS)
 		std::cout << "adding bomb for player " << PLAYER << *this << BoardPrinter<W,H>(add);
 	if (PLAYER)
-		players = ~players & MASK_PLAYER<W,H> & (board | (board >> 1));
+		players ^= MASK_PLAYER<W,H> & (board | (board >> 1));
 
 	board_t<W,H> exploding = incr<W,H>(board, add);
 	while (exploding) {
@@ -170,9 +170,8 @@ constexpr inline void State<W,H>::place(board_t<W,H> add) {
 			break;
 		}
 		board_t<W,H> oldExploding = exploding;
-		// clang needs some nudging to reuse the same mask constant
-        auto left = oldExploding;
-        asm("and %1,%0" : "+r"(left) : "r"(MASK_LEFT<6,5>) : "cc");
+        auto left = oldExploding & MASK_LEFT<6,5>;
+        asm("" : "+r"(left)); // clang needs some nudging to reuse the same mask constant
 		exploding  = incr<W,H>(board, left >> 2); // left
 		exploding |= incr<W,H>(board, (oldExploding << 2) & MASK_LEFT<W,H>); // right
 		exploding |= incr<W,H>(board, (oldExploding << (W * 2)) & ((1ULL << (2 * W * H)) - 1)); // up
@@ -180,5 +179,5 @@ constexpr inline void State<W,H>::place(board_t<W,H> add) {
 	}
 
 	if (PLAYER)
-		players = ~players & MASK_PLAYER<W,H> & (board | (board >> 1));
+		players ^= MASK_PLAYER<W,H> & (board | (board >> 1));
 }
