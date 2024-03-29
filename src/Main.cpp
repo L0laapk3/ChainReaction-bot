@@ -191,8 +191,9 @@ void assert_equal(T a, T b) {
 	}
 }
 
-void test(State<6,5>& state, board_t<6,5> add) {
+State<6,5> test(State<6,5> state, board_t<6,5> add) {
     state.addBomb<0>(add);
+	return state;
 }
 
 
