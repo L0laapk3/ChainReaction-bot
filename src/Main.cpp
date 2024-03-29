@@ -11,6 +11,10 @@
 
 
 
+
+constexpr bool LOG_EXPLOSIONS = true;
+
+
 template<size_t W, size_t H>
 requires(W * H * 2 <= 64 && W * H * 2 > 32)
 using board_t = uint64_t;
@@ -30,7 +34,7 @@ constexpr board_t<W,H> parseBoard(std::string str, int offset) {
 }
 
 template<size_t W, size_t H>
-constexpr board_t<W,H> PLAYER_MASK = [](){
+constexpr board_t<W,H> MASK_PLAYER = [](){
 	board_t<W,H> result = 0;
 	for (size_t i = 0; i < W * H; ++i)
 		result |= 1ULL << (i * 2);
@@ -67,7 +71,7 @@ struct State {
 	}
 
     constexpr auto operator==(const State<W,H>& other) const {
-		board_t<W,H> player_mask = PLAYER_MASK<W,H> & ~(players | (players >> 1) | (other.players | (other.players >> 1)));
+		board_t<W,H> player_mask = MASK_PLAYER<W,H> & ~(players | (players >> 1) | (other.players | (other.players >> 1)));
 		return board == other.board && (players & player_mask) == (other.players & player_mask);
 	}
 	constexpr auto operator!=(const State<W,H>& other) const {
@@ -85,14 +89,16 @@ template<size_t W, size_t H>
 std::ostream& operator<<(std::ostream& os, const BoardPrinter<W,H>& board) {
 	for (size_t i = H; i-- > 0; ) {
 		for (size_t j = W; j-- > 0; )
-			os << (((board.value - defaultBoard<W,H>) >> (i * W * 2 + j * 2)) & 0b11);
+			os << (((board.value) >> (i * W * 2 + j * 2)) & 0b11);
 		os << std::endl;
 	}
 	return os;
 }
 template<size_t W, size_t H>
 std::ostream& operator<<(std::ostream& os, const State<W,H>& state) {
-	return os << BoardPrinter<W,H>{ state.board };
+	os << BoardPrinter<W,H>{ state.board - defaultBoard<W,H> };
+	os << "board / players" << std::endl;
+	return os << BoardPrinter<W,H>{ state.players & MASK_PLAYER<W,H> };
 }
 template<size_t W, size_t H>
 constexpr State<W,H> defaultState = State<W,H>{ defaultBoard<W,H>, defaultPlayers<W,H> };
@@ -139,48 +145,38 @@ inline board_t<W,H> addOne(board_t<W,H>& board, board_t<W,H> add) {
 template <size_t W, size_t H>
 inline void resetEdges(board_t<W,H>& board, board_t<W,H> exploding) {
 	board += (exploding & CELLS_LEFT_RIGHT<W,H>) + (exploding & CELLS_UP_DOWN<W,H>);
-	// if (board & 0xf0000000'00000000ULL) {
-	// 	std::cout << BoardPrinter<W,H>(board) << std::endl;
-	// 	std::cout << BoardPrinter<W,H>(exploding + defaultState<W,H>.board) << std::endl;
-	// 	throw std::runtime_error("overflow");
-	// }
-}
-
-
-template<size_t W, size_t H>
-inline board_t<W,H> explode(board_t<W,H>& board, board_t<W,H> add) {
-	// std::cout << BoardPrinter<W,H>(board) << std::endl;
-	// std::cout << BoardPrinter<W,H>(add + defaultState<W,H>.board) << std::endl;
-	board_t<W,H> exploding = addOne<W,H>(board, add);
-	resetEdges<W,H>(board, exploding);
-	board_t<W,H> exploded = 0;
-	while (exploding) {
-		// std::cout << BoardPrinter<W,H>(board) << std::endl;
-		// std::cout << BoardPrinter<W,H>(exploding + defaultState<W,H>.board) << std::endl;
-		exploded |= exploding;
-		board_t<W,H> oldExploding = exploding;
-		exploding  = addOne<W,H>(board, (oldExploding & MASK_LEFT<W,H>) >> 2); // left
-		exploding |= addOne<W,H>(board, (oldExploding & MASK_RIGHT<W,H>) << 2); // right
-		exploding |= addOne<W,H>(board, (oldExploding << (W * 2)) & ((1ULL << (2 * W * H)) - 1)); // up
-		exploding |= addOne<W,H>(board, oldExploding >> (W * 2)); // down
-		resetEdges<W,H>(board, exploding);
-	}
-	return exploded;
 }
 
 
 template<bool player, size_t W, size_t H>
 inline State<W,H> addBomb(State<W,H> state, board_t<W,H> add) {
-	// std::cout << "adding bomb for player " << player << " at " << std::bitset<64>(add) << std::endl;
-	// add bomb for player 1. Invert state.players for other player
-	board_t<W,H> exploded = explode<W,H>(state.board, add);
-	if constexpr (player)
-		state.players |= exploded;
-	else
-		state.players &= ~exploded;
+	if constexpr (LOG_EXPLOSIONS)
+		std::cout << "adding bomb for player " << player << std::endl << state << std::endl << BoardPrinter<W,H>(add) << std::endl;
+	if (player)
+		state.players = ~state.players;
+	state.players &= MASK_PLAYER<W,H> & (state.board | (state.board >> 1));
+
+	board_t<W,H> exploding = addOne<W,H>(state.board, add);
+	resetEdges<W,H>(state.board, exploding);
+	while (exploding) {
+		if constexpr (LOG_EXPLOSIONS)
+			std::cout << BoardPrinter<W,H>(state.board) << std::endl << BoardPrinter<W,H>(exploding) << std::endl;
+		if (!(state.players &= ~exploding)) {
+			std::cout << "Game win condition" << std::endl;
+			break;
+		}
+		board_t<W,H> oldExploding = exploding;
+		exploding  = addOne<W,H>(state.board, (oldExploding & MASK_LEFT<W,H>) >> 2); // left
+		exploding |= addOne<W,H>(state.board, (oldExploding & MASK_RIGHT<W,H>) << 2); // right
+		exploding |= addOne<W,H>(state.board, (oldExploding << (W * 2)) & ((1ULL << (2 * W * H)) - 1)); // up
+		exploding |= addOne<W,H>(state.board, oldExploding >> (W * 2)); // down
+		resetEdges<W,H>(state.board, exploding);
+	}
+
+	if (player)
+		state.players = ~state.players;
 	return state;
 }
-
 
 
 template<typename T>
@@ -253,6 +249,6 @@ int main(int, char**) {
 	assert_equal(State<6,5>::parse("112120212311223312223232102221", "000000000000000000100000000000"), state = addBomb<0>(state, 1ULL << (20 * 2)));
 	assert_equal(State<6,5>::parse("022120122311133312233232012221", "010000110000110000110000010000"), state = addBomb<1>(state, 1ULL << (11 * 2)));
 	// game ends with player 0 putting at cellid 3
-	// state = addBomb<1>(state, 1ULL << (3 * 2));
+	assert_equal(~0ULL, (state = addBomb<1>(state, 1ULL << (3 * 2))).players);
 	std::cout << "All tests passed" << std::endl;
 }
