@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9.4)
-project(tb2 VERSION 0.1.0)
+project(CRfast VERSION 0.1.0)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 file(GLOB source_files ${PROJECT_SOURCE_DIR}/src/*.cpp)

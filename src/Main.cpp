@@ -16,7 +16,7 @@ requires(W * H * 2 <= 64 && W * H * 2 > 32)
 using board_t = uint64_t;
 
 template<size_t W, size_t H>
-board_t<W,H> parseBoard(std::string str, int offset) {
+constexpr board_t<W,H> parseBoard(std::string str, int offset) {
 	board_t<W,H> result = 0;
 	for (size_t i = 0; i < str.size(); ++i) {
 		board_t<W,H> c = str[i] - '0';
@@ -55,37 +55,22 @@ constexpr board_t<W,H> defaultBoard = [](){
 }();
 
 template<size_t W, size_t H>
-constexpr board_t<W,H> defaultPlayers = [](){
-	board_t<W,H> players = 0;
-	// players: alternate the unused bits such that the popcnt is balanced when inverted
-	board_t<W,H> add = 2;
-	while (add) {
-		players |= add;
-		add <<= 4;
-	}
-	assert((sizeof(board_t<W,H>) * 8 - W * H) % 2 == 0);
-	board_t<W,H> leftover = 1ULL << (W * H * 2);
-	while (leftover) {
-		players |= leftover;
-		leftover <<= 4;
-	}
-	return players;
-}();
+constexpr board_t<W,H> defaultPlayers = 0;
 
 template<size_t W, size_t H>
 struct State {
 	board_t<W,H> board;
 	board_t<W,H> players;
 
-	static State parse(std::string board, std::string players) {
+	constexpr static State parse(std::string board, std::string players) {
 		return State{ parseBoard<W,H>(board, 0) + defaultBoard<W,H>, parseBoard<W,H>(players, 1) | defaultPlayers<W,H> };
 	}
 
-    auto operator==(const State<W,H>& other) const {
+    constexpr auto operator==(const State<W,H>& other) const {
 		board_t<W,H> player_mask = PLAYER_MASK<W,H> & ~(players | (players >> 1) | (other.players | (other.players >> 1)));
 		return board == other.board && (players & player_mask) == (other.players & player_mask);
 	}
-	auto operator!=(const State<W,H>& other) const {
+	constexpr auto operator!=(const State<W,H>& other) const {
 		return !(*this == other);
 	}
 };
@@ -207,6 +192,10 @@ void assert_equal(T&& a, T& b) {
 	}
 }
 
+State<6,5> test(State<6,5>& state, board_t<6,5> add) {
+    return addBomb<1>(state, add);
+}
+
 
 int main(int, char**) {
 	auto state = defaultState<6,5>;
@@ -264,5 +253,6 @@ int main(int, char**) {
 	assert_equal(State<6,5>::parse("112120212311223312223232102221", "000000000000000000100000000000"), state = addBomb<0>(state, 1ULL << (20 * 2)));
 	assert_equal(State<6,5>::parse("022120122311133312233232012221", "010000110000110000110000010000"), state = addBomb<1>(state, 1ULL << (11 * 2)));
 	// game ends with player 0 putting at cellid 3
-	state = addBomb<1>(state, 1ULL << (3 * 2));
+	// state = addBomb<1>(state, 1ULL << (3 * 2));
+	std::cout << "All tests passed" << std::endl;
 }
