@@ -77,7 +77,7 @@ struct State {
 	}
 
 	template<bool PLAYER>
-	constexpr void addBomb(board_t<W,H> add);
+	constexpr void place(board_t<W,H> add);
 };
 
 template<size_t W, size_t H>
@@ -138,7 +138,7 @@ constexpr board_t<W,H> CELLS_UP_DOWN = [](){
 
 
 template<size_t W, size_t H>
-constexpr inline board_t<W,H> addOne(board_t<W,H>& board, board_t<W,H> add) {
+constexpr inline board_t<W,H> incr(board_t<W,H>& board, board_t<W,H> add) {
 	board_t<W,H> exploding = board & (board >> 1) & add;
 	// can overflow
 	board += add - (exploding << 2);
@@ -153,14 +153,13 @@ constexpr inline void resetEdges(board_t<W,H>& board, board_t<W,H> exploding) {
 
 template<size_t W, size_t H>
 template<bool PLAYER>
-constexpr inline void State<W,H>::addBomb(board_t<W,H> add) {
+constexpr inline void State<W,H>::place(board_t<W,H> add) {
 	if constexpr (LOG_EXPLOSIONS)
 		std::cout << "adding bomb for player " << PLAYER << *this << BoardPrinter<W,H>(add);
 	if (PLAYER)
-		players = ~players;
-	players &= MASK_PLAYER<W,H> & (board | (board >> 1));
+		players = ~players & MASK_PLAYER<W,H> & (board | (board >> 1));
 
-	board_t<W,H> exploding = addOne<W,H>(board, add);
+	board_t<W,H> exploding = incr<W,H>(board, add);
 	resetEdges<W,H>(board, exploding);
 	while (exploding) {
 		if constexpr (LOG_EXPLOSIONS)
@@ -171,13 +170,16 @@ constexpr inline void State<W,H>::addBomb(board_t<W,H> add) {
 			break;
 		}
 		board_t<W,H> oldExploding = exploding;
-		exploding  = addOne<W,H>(board, (oldExploding & MASK_LEFT<W,H>) >> 2); // left
-		exploding |= addOne<W,H>(board, (oldExploding & MASK_RIGHT<W,H>) << 2); // right
-		exploding |= addOne<W,H>(board, (oldExploding << (W * 2)) & ((1ULL << (2 * W * H)) - 1)); // up
-		exploding |= addOne<W,H>(board, oldExploding >> (W * 2)); // down
+		// clang needs some nudging to reuse the same mask constant
+        auto left = oldExploding;
+        asm("and %1,%0" : "+r"(left) : "r"(MASK_LEFT<6,5>) : "cc");
+		exploding  = incr<W,H>(board, left >> 2); // left
+		exploding |= incr<W,H>(board, (oldExploding << 2) & MASK_LEFT<W,H>); // right
+		exploding |= incr<W,H>(board, (oldExploding << (W * 2)) & ((1ULL << (2 * W * H)) - 1)); // up
+		exploding |= incr<W,H>(board, oldExploding >> (W * 2)); // down
 		resetEdges<W,H>(board, exploding);
 	}
 
 	if (PLAYER)
-		players = ~players;
+		players = ~players & MASK_PLAYER<W,H> & (board | (board >> 1));
 }
