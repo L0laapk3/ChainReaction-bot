@@ -160,8 +160,8 @@ constexpr inline void State<W,H>::place(board_t<W,H> add) {
 		players = ~players & MASK_PLAYER<W,H> & (board | (board >> 1));
 
 	board_t<W,H> exploding = incr<W,H>(board, add);
-	resetEdges<W,H>(board, exploding);
 	while (exploding) {
+		resetEdges<W,H>(board, exploding);
 		if constexpr (LOG_EXPLOSIONS)
 			std::cout << BoardPrinter<W,H>(board) << BoardPrinter<W,H>(exploding) << std::endl;
 		if (!(players &= ~exploding)) {
@@ -177,7 +177,6 @@ constexpr inline void State<W,H>::place(board_t<W,H> add) {
 		exploding |= incr<W,H>(board, (oldExploding << 2) & MASK_LEFT<W,H>); // right
 		exploding |= incr<W,H>(board, (oldExploding << (W * 2)) & ((1ULL << (2 * W * H)) - 1)); // up
 		exploding |= incr<W,H>(board, oldExploding >> (W * 2)); // down
-		resetEdges<W,H>(board, exploding);
 	}
 
 	if (PLAYER)
