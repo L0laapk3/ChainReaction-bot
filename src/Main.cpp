@@ -27,21 +27,35 @@ board_t parseBoard(std::string str, int offset) {
 	return result;
 }
 
+template<size_t width, size_t height>
+constexpr board_t PLAYER_MASK = [](){
+	board_t result = 0;
+	for (size_t i = 0; i < width * height; ++i)
+		result |= 1ULL << (i * 2);
+	return result;
+}();
+
+template<size_t width, size_t height>
 struct State {
 	board_t board;
 	board_t players;
 
-	template<size_t width, size_t height>
 	static State parse(std::string board, std::string players) {
 		return State{ parseBoard<width, height>(board, 0) + defaultState<width, height>.board, parseBoard<width, height>(players, 1) | defaultState<width, height>.players };
 	}
 
-    auto operator<=>(const State&) const = default;
+    auto operator==(const State<width, height>& other) const {
+		board_t player_mask = PLAYER_MASK<width, height> & ~(players | (players >> 1) | (other.players | (other.players >> 1)));
+		return board == other.board && (players & player_mask) == (other.players & player_mask);
+	}
+	auto operator!=(const State<width, height>& other) const {
+		return !(*this == other);
+	}
 };
 
 template<size_t width, size_t height>
-constexpr State defaultState = [](){
-	State state{ 0, 0 };
+constexpr State<width, height> defaultState = [](){
+	State<width, height> state{ 0, 0 };
 	// board: add 1 to each edge cell
 	for (size_t i = 0; i < width; ++i) {
 		state.board += 1ULL << (i * 2);
@@ -131,7 +145,7 @@ inline board_t explode(board_t& board, board_t add) {
 
 
 template<size_t width, size_t height>
-inline State addBomb(State state, board_t add) {
+inline State<width, height> addBomb(State<width, height> state, board_t add) {
 	// add bomb for player 1. Invert state.players for other player
 	board_t exploded = explode<width, height>(state.board, add);
 	state.players |= exploded;
@@ -141,12 +155,15 @@ inline State addBomb(State state, board_t add) {
 
 
 template<typename T>
-void assert_equal(T&& a, T&& b) {
+void assert_equal(T&& a, T& b) {
 	if (a != b)
 		throw std::runtime_error("assertion failed");
 }
 
 
 int main(int, char**) {
-	assert_equal(State::parse<6,5>("000000000000000000000000000010", "000000000000000000000000000010"), addBomb<6,5>(defaultState<6,5>, 1ULL << (1 * 2)));
+	auto state = defaultState<6,5>;
+	assert_equal(State<6,5>::parse("000000000000000000000000000010", "000000000000000000000000000010"), state = addBomb(state, 1ULL << (1 * 2)));
+	assert_equal(State<6,5>::parse("000000000000000000000000000020", "000000000000000000000000000010"), state = addBomb(state, 1ULL << (1 * 2)));
+	assert_equal(State<6,5>::parse("000000000000000000000010000101", "000000000000000000000000000010"), state = addBomb(state, 1ULL << (1 * 2)));
 }
