@@ -140,14 +140,14 @@ constexpr board_t<W,H> CELLS_UP_DOWN = [](){
 template<size_t W, size_t H>
 constexpr inline board_t<W,H> incr(board_t<W,H>& board, board_t<W,H> add) {
 	board_t<W,H> exploding = board & (board >> 1) & add;
-	// can overflow
+	// to avoid overflow, 4 is subtracted from cell when it explodes. 1 or 2 is later added back for edges in resetEdges().
 	board += add - (exploding << 2);
 	return exploding;
 }
 
 template <size_t W, size_t H>
 constexpr inline void resetEdges(board_t<W,H>& board, board_t<W,H> exploding) {
-	board += (exploding & CELLS_LEFT_RIGHT<W,H>) + (exploding & CELLS_UP_DOWN<W,H>);
+	board += (exploding + (exploding << 1)) & defaultBoard<W,H>;
 }
 
 
