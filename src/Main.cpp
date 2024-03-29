@@ -252,7 +252,7 @@ int main(int, char**) {
 	state.addBomb<0>(1ULL << (20 * 2));	assert_equal(state, State<6,5>::parse("112120212311223312223232102221", "000000000000000000100000000000"));
 	state.addBomb<1>(1ULL << (11 * 2));	assert_equal(state, State<6,5>::parse("022120122311133312233232012221", "010000110000110000110000010000"));
 	// game ends with player 0 putting at cellid 3
-	state.addBomb<1>(1ULL << (3 * 2));
-	assert_equal<board_t<6,5>>(~0ULL, state.players);
+	state.addBomb<0>(1ULL << (3  * 2));
+	assert_equal<board_t<6,5>>(0ULL, state.players);
 	std::cout << "All tests passed" << std::endl;
 }
