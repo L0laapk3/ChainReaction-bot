@@ -1,3 +1,5 @@
+#pragma once
+
 #include <array>
 #include <iostream>
 #include <bitset>
@@ -161,14 +163,19 @@ constexpr inline void State<W,H>::place(board_t<W,H> add) {
 
 	board_t<W,H> exploding = incr<W,H>(board, add);
 	while (exploding) {
-		resetEdges<W,H>(board, exploding);
-		if constexpr (LOG_EXPLOSIONS)
-			std::cout << BoardPrinter<W,H>(board) << BoardPrinter<W,H>(exploding) << std::endl;
 		if (!(players &= ~exploding)) {
 			if constexpr (LOG_EXPLOSIONS)
 				std::cout << "Game win condition" << std::endl;
+#ifndef NDEBUG
+			resetEdges<W,H>(board, exploding);
+#endif
 			break;
 		}
+		if constexpr (LOG_EXPLOSIONS)
+			std::cout << BoardPrinter<W,H>(board) << BoardPrinter<W,H>(exploding) << std::endl;
+
+		resetEdges<W,H>(board, exploding);
+
 		board_t<W,H> oldExploding = exploding;
         auto left = oldExploding & MASK_LEFT<6,5>;
         asm("" : "+r"(left)); // clang needs some nudging to reuse the same mask constant

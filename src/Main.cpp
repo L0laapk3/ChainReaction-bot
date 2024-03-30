@@ -1,5 +1,5 @@
 #include "board.hpp"
-
+#include "tests_critical.hpp"
 
 
 
@@ -78,4 +78,6 @@ int main(int, char**) {
 	state.place<0>(1ULL << (3  * 2));
 	assert_equal<board_t<6,5>>(0ULL, state.players);
 	std::cout << "All tests passed" << std::endl;
+
+	bruteforce<6,5>();
 }
