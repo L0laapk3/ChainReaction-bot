@@ -15,6 +15,15 @@
 constexpr bool LOG_EXPLOSIONS = false;
 
 
+#if !defined(NDEBUG)
+	#define FUCKING_INLINE __attribute__((noinline))
+#else
+	#define FUCKING_INLINE __attribute__((always_inline)) inline
+#endif
+
+
+
+
 template<size_t W, size_t H>
 requires(W * H * 2 <= 64 && W * H * 2 > 32)
 using board_t = uint64_t;
@@ -78,6 +87,7 @@ struct State {
 		return !(*this == other);
 	}
 
+	constexpr inline board_t<W,H> incrCells(board_t<W,H> add);
 	template<bool PLAYER>
 	constexpr void place(board_t<W,H> add);
 };
@@ -138,51 +148,47 @@ constexpr board_t<W,H> CELLS_UP_DOWN = [](){
 }();
 
 
+template<typename T>
+constexpr inline void optFence(T& v) {
+	// Stops the compiler from reordering operations through this variable (and making it worse :( )
+    asm inline ("" : "+r"(v));
+}
+
 
 template<size_t W, size_t H>
-constexpr inline board_t<W,H> incr(board_t<W,H>& board, board_t<W,H> add) {
+constexpr FUCKING_INLINE board_t<W,H> State<W,H>::incrCells(board_t<W,H> add) {
+	players &= ~add;
+    optFence(players);
 	board_t<W,H> exploding = board & (board >> 1) & add;
 	// to avoid overflow, 4 is subtracted from cell when it explodes. 1 or 2 is later added back for edges in resetEdges().
 	board += add - (exploding << 2);
 	return exploding;
 }
 
-template <size_t W, size_t H>
-constexpr inline void resetEdges(board_t<W,H>& board, board_t<W,H> exploding) {
-	board += (exploding + (exploding << 1)) & defaultBoard<W,H>;
-}
-
 
 template<size_t W, size_t H>
 template<bool PLAYER>
-constexpr inline void State<W,H>::place(board_t<W,H> add) {
+constexpr FUCKING_INLINE void State<W,H>::place(board_t<W,H> add) {
 	if constexpr (LOG_EXPLOSIONS)
 		std::cout << "adding bomb for player " << PLAYER << *this << BoardPrinter<W,H>(add);
 	if (PLAYER)
 		players ^= MASK_PLAYER<W,H> & (board | (board >> 1));
 
-	board_t<W,H> exploding = incr<W,H>(board, add);
-	while (exploding) {
-		if (!(players &= ~exploding)) {
-			if constexpr (LOG_EXPLOSIONS)
-				std::cout << "Game win condition" << std::endl;
-#ifndef NDEBUG
-			resetEdges<W,H>(board, exploding);
-#endif
-			break;
-		}
+	board_t<W,H> exploding = incrCells(add);
+	while (exploding && players) {
 		if constexpr (LOG_EXPLOSIONS)
 			std::cout << BoardPrinter<W,H>(board) << BoardPrinter<W,H>(exploding) << std::endl;
 
-		resetEdges<W,H>(board, exploding);
+		// add back 1 and 2 to exploded edges and corners after incrCells call
+		board += (exploding + (exploding << 1)) & defaultBoard<W,H>;
 
 		board_t<W,H> oldExploding = exploding;
         auto left = oldExploding & MASK_LEFT<6,5>;
-        asm("" : "+r"(left)); // clang needs some nudging to reuse the same mask constant
-		exploding  = incr<W,H>(board, left >> 2); // left
-		exploding |= incr<W,H>(board, (oldExploding << 2) & MASK_LEFT<W,H>); // right
-		exploding |= incr<W,H>(board, (oldExploding << (W * 2)) & ((1ULL << (2 * W * H)) - 1)); // up
-		exploding |= incr<W,H>(board, oldExploding >> (W * 2)); // down
+        optFence(left); // clang needs some nudging to reuse the same mask constant
+		exploding  = incrCells(left >> 2); // left
+		exploding |= incrCells((oldExploding << 2) & MASK_LEFT<W,H>); // right
+		exploding |= incrCells((oldExploding << (W * 2)) & ((1ULL << (2 * W * H)) - 1)); // up
+		exploding |= incrCells(oldExploding >> (W * 2)); // down
 	}
 
 	if (PLAYER)
