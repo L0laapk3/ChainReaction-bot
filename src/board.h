@@ -1,14 +1,15 @@
 #pragma once
 
-#include <cstdint>
+#include "types.h"
 #include <string_view>
 #include "score.h"
 
 
 
+
 template<size_t W, size_t H>
 requires(W * H * 2 <= 64 && W * H * 2 > 32)
-using board_t = uint64_t;
+using board_t = U64;
 
 
 

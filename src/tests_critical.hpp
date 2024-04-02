@@ -36,7 +36,7 @@ std::pair<size_t, State<W,H>> countUntilCritical(xoshiro256ss& g) {
 template<size_t W, size_t H>
 void bruteforce() {
 	xoshiro256ss g;
-	std::array<uint64_t, 256> counts = { 0 };
+	std::array<U64, 256> counts = { 0 };
 	for (size_t i = 0; i < 10000000; ++i) {
 		auto [count, state] = countUntilCritical<W,H>(g);
 		counts[count]++;

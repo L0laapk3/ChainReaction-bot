@@ -1,5 +1,6 @@
 #pragma once
 
+#include "types.h"
 #include "score.h"
 #include "boardEval.hpp"
 #include "boardIter.hpp"
@@ -15,7 +16,7 @@ struct RootResult {
 	explicit operator Score() const { return score; };
 };
 struct SearchResult : public RootResult {
-	int64_t durationUs;
+	S64 durationUs;
 	Depth depth;
 };
 
@@ -98,7 +99,7 @@ SearchResult searchDepth(State<W,H> state, Depth depth, bool searchWin, Score al
 }
 
 struct SearchStopCriteria {
-	int64_t time = 1000 * 60 * 24 * 365;
+	S64 time = 1000 * 60 * 24 * 365;
 	Depth depth  = DEPTH_MAX;
 };
 
@@ -121,10 +122,10 @@ SearchResult search(State<W,H> state, SearchStopCriteria stop, SearchPersistent&
 		// TT: recalculate
 	}
 
-	int64_t lastDurationUs = 1, lastDurationUs2 = 1;
+	S64 lastDurationUs = 1, lastDurationUs2 = 1;
 	bool widenedAspirationWindow = false;
 	Depth depth = 1;
-	int64_t usedTime = 0;
+	S64 usedTime = 0;
 	stop.time *= 1000;
 	while (depth < stop.depth) {
 		depth++;
