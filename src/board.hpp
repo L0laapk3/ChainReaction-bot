@@ -1,6 +1,7 @@
 #pragma once
 
 #include "board.h"
+#include "util.hpp"
 
 #include <array>
 #include <iostream>
@@ -13,14 +14,6 @@
 
 
 constexpr bool LOG_EXPLOSIONS = false;
-
-
-#if !defined(NDEBUG)
-	#define FUCKING_INLINE __attribute__((noinline))
-#else
-	#define FUCKING_INLINE __attribute__((always_inline)) inline
-#endif
-
 
 
 
@@ -136,13 +129,6 @@ constexpr board_t<W,H> CELLS_UP_DOWN = [](){
 		result |= row << (i * 2);
 	return result;
 }();
-
-
-template<typename T>
-constexpr inline void optFence(T& v) {
-	// Stops the compiler from reordering operations through this variable (and making it worse :( )
-    asm inline ("" : "+r"(v));
-}
 
 
 template<size_t W, size_t H>
