@@ -178,7 +178,7 @@ stopSearchNoDepthSet:
 	persistent.depth--; // next search: one less depth
 	printf("Depth: %2d, Score: %s, Time: %lldms\n", depth, scoreToString(result.score, player).c_str(), usedTime / 1000);
 	if (parsedScore.outcome != SCORE::DRAW && parsedScore.outcomeDistance < depth + 1 && depth > 2) {
-		std::cout << "bruh momento" << std::endl;
+		std::cerr << "bruh momento" << std::endl;
 		std::exit(1);
 	}
 

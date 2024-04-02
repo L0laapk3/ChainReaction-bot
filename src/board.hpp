@@ -1,13 +1,13 @@
 #pragma once
 
+#include "board.h"
+
 #include <array>
 #include <iostream>
 #include <bitset>
 #include <type_traits>
-#include <cstdint>
 #include <cassert>
 #include <numeric>
-#include <string_view>
 
 
 
@@ -23,10 +23,6 @@ constexpr bool LOG_EXPLOSIONS = false;
 
 
 
-
-template<size_t W, size_t H>
-requires(W * H * 2 <= 64 && W * H * 2 > 32)
-using board_t = uint64_t;
 
 template<size_t W, size_t H>
 constexpr board_t<W,H> parseBoard(std::string_view str, int offset) {
@@ -70,27 +66,21 @@ constexpr board_t<W,H> defaultBoard = [](){
 template<size_t W, size_t H>
 constexpr board_t<W,H> defaultPlayers = 0;
 
+
 template<size_t W, size_t H>
-struct State {
-	board_t<W,H> board;
-	board_t<W,H> players;
+constexpr State<W,H> State<W,H>::parse(std::string_view board, std::string_view players) {
+	return State<W,H>{ parseBoard<W,H>(board, 0) + defaultBoard<W,H>, parseBoard<W,H>(players, 1) | defaultPlayers<W,H> };
+}
 
-	constexpr static State parse(std::string_view board, std::string_view players) {
-		return State{ parseBoard<W,H>(board, 0) + defaultBoard<W,H>, parseBoard<W,H>(players, 1) | defaultPlayers<W,H> };
-	}
-
-    constexpr auto operator==(const State<W,H>& other) const {
-		board_t<W,H> player_mask = MASK_PLAYER<W,H> & ~(players | (players >> 1) | (other.players | (other.players >> 1)));
-		return board == other.board && (players & player_mask) == (other.players & player_mask);
-	}
-	constexpr auto operator!=(const State<W,H>& other) const {
-		return !(*this == other);
-	}
-
-	constexpr inline board_t<W,H> incrCells(board_t<W,H> add);
-	template<bool PLAYER>
-	constexpr void place(board_t<W,H> add);
-};
+template<size_t W, size_t H>
+constexpr auto State<W,H>::operator==(const State<W,H>& other) const {
+	board_t<W,H> player_mask = MASK_PLAYER<W,H> & ~(players | (players >> 1) | (other.players | (other.players >> 1)));
+	return board == other.board && (players & player_mask) == (other.players & player_mask);
+}
+template<size_t W, size_t H>
+constexpr auto State<W,H>::operator!=(const State<W,H>& other) const {
+	return !(*this == other);
+}
 
 template<size_t W, size_t H>
 struct BoardPrinter {
