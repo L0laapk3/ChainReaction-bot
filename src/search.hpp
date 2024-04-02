@@ -2,20 +2,9 @@
 
 #include "score.h"
 #include "boardEval.hpp"
+#include "boardIter.hpp"
 
 #include <chrono>
-
-
-
-template<bool player, bool quiescence, size_t W, size_t H, typename Callable>
-void iterateMoves(const State<W,H>& state, Callable&& callback) {
-	if constexpr (quiescence)
-		return;
-	for (int i = 0; i < W*H; ++i) {
-		if (callback(1ULL << (i * 2)))
-			return;
-	}
-}
 
 
 
@@ -48,7 +37,7 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 	size_t bestMove = -1ULL;
 	bool foundMove = false;
 	Score bestRootScore = SCORE::MIN;
-	iterateMoves<0, !root && quiescence>(state, [&](const board_t<W,H>& move) {
+	state.template iterateMoves<0, !root && quiescence>([&](const board_t<W,H>& move) {
 		auto newState = state;
 		newState.template place<0>(move);
 		foundMove = true;

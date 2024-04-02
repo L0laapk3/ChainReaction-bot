@@ -22,11 +22,14 @@ struct State {
     constexpr auto operator==(const State<W,H>& other) const;
 	constexpr auto operator!=(const State<W,H>& other) const;
 
-	constexpr inline board_t<W,H> incrCells(board_t<W,H> add);
+	constexpr board_t<W,H> incrCells(board_t<W,H> add);
 	template<bool PLAYER>
 	constexpr void place(board_t<W,H> add);
 
 	constexpr void invertPlayer();
 
 	constexpr Score evaluate() const;
+
+	template<bool player, bool quiescence, typename Callable>
+	void iterateMoves(Callable&& callback) const;
 };
