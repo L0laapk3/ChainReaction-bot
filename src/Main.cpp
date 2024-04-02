@@ -79,5 +79,5 @@ int main(int, char**) {
 	assert_equal<board_t<6,5>>(0ULL, state.players);
 	std::cout << "All tests passed" << std::endl;
 
-	bruteforce<6,5>();
+	// bruteforce<6,5>();
 }
