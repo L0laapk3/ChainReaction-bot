@@ -87,8 +87,12 @@ int main(int, char**) {
 
 		state.place<0>(1ULL << (result.bestMove * 2));
 		std::cout << state << std::endl;
-		state.invertPlayer();
 		std::cout << result.bestMove << std::endl;
+		if (state.isWon()) {
+			std::cout << "The end :)" << std::endl;
+			break;
+		}
+		state.invertPlayer();
 		if (result.bestMove < 0 || result.bestMove >= 6*5)
 			throw std::runtime_error("Game fucked");
 	}

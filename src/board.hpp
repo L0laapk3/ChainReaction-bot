@@ -135,7 +135,7 @@ constexpr void State<W,H>::validate() const {
 
 		if (players & ~(MASK_PLAYER<W,H> & (board | (board >> 1))))
 			throw std::runtime_error("player bit on invalid cell");
-	} catch (std::exception& e) {
+	} catch (std::runtime_error& e) {
 		std::cout << *this << std::endl;
 		throw e;
 	}

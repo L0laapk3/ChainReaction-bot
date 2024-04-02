@@ -39,6 +39,7 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 	}
 
 	state.invertPlayer();
+	state.validate();
 
 	size_t bestMove = -1ULL;
 	size_t bestRootMove = -1ULL;
@@ -47,9 +48,13 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 	state.template iterateMoves<0, !root && quiescence>([&](size_t move) {
 		auto newState = state;
 		newState.template place<0>(1ULL << (2 * move));
+		newState.validate();
 		foundMove = true;
 		Score score;
-		if (quiescence || remainingDepth - 1 <= 1) // trackDistance: widen the search window so we can subtract one again to penalize for distance
+
+		if (newState.isWon())
+			score = SCORE::WIN;
+		else if (quiescence || remainingDepth - 1 <= 1) // trackDistance: widen the search window so we can subtract one again to penalize for distance
 			score = -negamax<false, true,  penalizeDistance>(newState, -(beta + (beta >= 0 ? penalizeDistance : -penalizeDistance)), -(alpha + (alpha >= 0 ? penalizeDistance : -penalizeDistance)), 1);
 		else
 			score = -negamax<false, false, penalizeDistance>(newState, -(beta + (beta >= 0 ? penalizeDistance : -penalizeDistance)), -(alpha + (alpha >= 0 ? penalizeDistance : -penalizeDistance)), remainingDepth - 1);
@@ -175,7 +180,7 @@ SearchResult search(State<W,H> state, SearchStopCriteria stop, SearchPersistent&
 	persistent.depth = depth;
 stopSearchNoDepthSet:
 	persistent.depth--; // next search: one less depth
-	printf("Depth: %2d, Score: %s, Time: %lldms\n", depth, scoreToString(result.score).c_str(), usedTime / 1000);
+	printf("Depth: %2d, Score: %s, Time: %ldms\n", depth, scoreToString(result.score).c_str(), usedTime / 1000);
 	if (parsedScore.outcome != SCORE::DRAW && parsedScore.outcomeDistance < depth + 1 && depth > 2) {
 		std::cerr << "bruh momento" << std::endl;
 		std::exit(1);
