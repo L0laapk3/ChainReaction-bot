@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string_view>
+#include "score.h"
 
 
 
@@ -24,4 +25,8 @@ struct State {
 	constexpr inline board_t<W,H> incrCells(board_t<W,H> add);
 	template<bool PLAYER>
 	constexpr void place(board_t<W,H> add);
+
+	constexpr void invertPlayer();
+
+	constexpr Score evaluate() const;
 };

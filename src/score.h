@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 #include <sstream>
+#include <iomanip>
 
 
 
@@ -45,10 +46,7 @@ inline ScoreParsed parseScore(Score score) {
 		result.outcome = SCORE::DRAW;
 	return result;
 }
-inline std::string scoreToString(Score score, bool player) {
-	return scoreToString(parseScore(score), player);
-}
-inline std::string scoreToString(ScoreParsed parsed, bool player) {
+inline std::string scoreToString(ScoreParsed parsed, bool player = 0) {
 	if (parsed.outcome != SCORE::DRAW)
 		return std::string((parsed.outcome == SCORE::WIN) != player ? " win" : "lose") + " in " + std::to_string(parsed.outcomeDistance);
 
@@ -58,4 +56,7 @@ inline std::string scoreToString(ScoreParsed parsed, bool player) {
 	std::stringstream stream;
 	stream << (parsed.eval > 0 ? "+" : parsed.eval == SCORE::DRAW ? " " : "") << std::fixed << std::setprecision(4) << ((double)parsed.eval / MUL_PIECE_ADVANTAGE);
 	return stream.str();
+}
+inline std::string scoreToString(Score score, bool player = 0) {
+	return scoreToString(parseScore(score), player);
 }

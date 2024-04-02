@@ -1,13 +1,16 @@
 #pragma once
 
 #include "score.h"
-#include "board.hpp"
+#include "boardEval.hpp"
 
+#include <chrono>
 
 
 
 template<bool player, bool quiescence, size_t W, size_t H, typename Callable>
 void iterateMoves(const State<W,H>& state, Callable&& callback) {
+	if constexpr (quiescence)
+		return;
 	for (int i = 0; i < W*H; ++i) {
 		if (callback(1ULL << (i * 2)))
 			return;
@@ -20,6 +23,7 @@ struct RootResult {
 	Score score;
 	size_t bestMove;
 	bool foundMove;
+	operator Score() const { return score; };
 };
 
 template<bool root, bool quiescence, bool penalizeDistance, size_t W, size_t H>
@@ -27,7 +31,7 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 	Score alphaOrig = alpha;
 
 	if constexpr (!root && quiescence) {
-		Score standingPat = evaluate(state);
+		Score standingPat = state.evaluate();
 		if (standingPat >= beta)
 			return standingPat;
 		if (alpha < standingPat)
@@ -45,14 +49,16 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 	bool foundMove = false;
 	Score bestRootScore = SCORE::MIN;
 	iterateMoves<0, !root && quiescence>(state, [&](const board_t<W,H>& move) {
-		const auto newState = state.place<0>(move);
+		auto newState = state;
+		newState.template place<0>(move);
 		foundMove = true;
+		Score score;
 		if (quiescence || remainingDepth - 1 <= 1) // trackDistance: widen the search window so we can subtract one again to penalize for distance
-			score = -negamax<false, true,  penalizeDistance>(newState, -(beta + (beta >= 0 ? trackDistance : -trackDistance)), -(alpha + (alpha >= 0 ? trackDistance : -trackDistance)), 1);
+			score = -negamax<false, true,  penalizeDistance>(newState, -(beta + (beta >= 0 ? penalizeDistance : -penalizeDistance)), -(alpha + (alpha >= 0 ? penalizeDistance : -penalizeDistance)), 1);
 		else
-			score = -negamax<false, false, penalizeDistance>(newState, -(beta + (beta >= 0 ? trackDistance : -trackDistance)), -(alpha + (alpha >= 0 ? trackDistance : -trackDistance)), depthLeft - 1);
+			score = -negamax<false, false, penalizeDistance>(newState, -(beta + (beta >= 0 ? penalizeDistance : -penalizeDistance)), -(alpha + (alpha >= 0 ? penalizeDistance : -penalizeDistance)), remainingDepth - 1);
 
-		if (trackDistance && score != 0) // move score closer to zero for every move
+		if (penalizeDistance && score != 0) // move score closer to zero for every move
 			score -= score >= 0 ? 1 : -1;
 
 		if (root && score > bestRootScore) {
@@ -73,7 +79,7 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 		// TT store
 	}
 
-	return { alpha, bestMove, foundMove };
+	return RootResult{ alpha, bestMove, foundMove };
 }
 
 
@@ -83,7 +89,7 @@ struct SearchResult : public RootResult {
 };
 
 template<size_t W, size_t H>
-SearchResult searchOne(State<W,H> state, Depth depth, bool searchWin, Score alpha, Score beta) {
+SearchResult searchDepth(State<W,H> state, Depth depth, bool searchWin, Score alpha, Score beta) {
 	SearchResult result{};
 	result.depth = depth;
 	auto start = std::chrono::high_resolution_clock::now();
@@ -113,7 +119,7 @@ struct SearchPersistent {
 };
 
 template<size_t W, size_t H>
-SearchResult searchTime(State<W,H> state, SearchStopCriteria stop, SearchPersistent& persistent) {
+SearchResult search(State<W,H> state, SearchStopCriteria stop, SearchPersistent& persistent) {
 	SearchResult result{};
 	ScoreParsed parsedScore{}, lastParsed = parseScore(persistent.score);
 
@@ -132,7 +138,7 @@ SearchResult searchTime(State<W,H> state, SearchStopCriteria stop, SearchPersist
 		depth++;
 		while (true) {
 			while (true) {
-				(SearchResult&)result = searchOne(state, depth, searchWin, persistent.alpha, persistent.beta);
+				(SearchResult&)result = searchDepth(state, depth, searchWin, persistent.alpha, persistent.beta);
 				usedTime += result.durationUs;
 				parsedScore = parseScore(result.score);
 				if ((parsedScore.outcome != SCORE::DRAW) && !persistent.searchWin) {
@@ -176,7 +182,7 @@ SearchResult searchTime(State<W,H> state, SearchStopCriteria stop, SearchPersist
 	persistent.depth = depth;
 stopSearchNoDepthSet:
 	persistent.depth--; // next search: one less depth
-	printf("Depth: %2d, Score: %s, Time: %lldms\n", depth, scoreToString(result.score, player).c_str(), usedTime / 1000);
+	printf("Depth: %2d, Score: %s, Time: %lldms\n", depth, scoreToString(result.score).c_str(), usedTime / 1000);
 	if (parsedScore.outcome != SCORE::DRAW && parsedScore.outcomeDistance < depth + 1 && depth > 2) {
 		std::cerr << "bruh momento" << std::endl;
 		std::exit(1);
@@ -187,7 +193,7 @@ stopSearchNoDepthSet:
 }
 
 template<size_t W, size_t H>
-SearchResult searchTime(State<W,H> state, SearchStopCriteria stop) {
+SearchResult search(State<W,H> state, SearchStopCriteria stop) {
 	SearchPersistent persistent{};
-	return searchTime(state, stop, persistent);
+	return search(state, stop, persistent);
 }

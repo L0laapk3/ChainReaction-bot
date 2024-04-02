@@ -90,3 +90,11 @@ std::ostream& operator<<(std::ostream& os, const State<W,H>& state) {
 }
 template<size_t W, size_t H>
 constexpr State<W,H> defaultState = State<W,H>{ defaultBoard<W,H>, defaultPlayers<W,H> };
+
+
+
+
+template<size_t W, size_t H>
+constexpr void inline State<W,H>::invertPlayer() {
+	players ^= MASK_PLAYER<W,H> & (board | (board >> 1));
+}
