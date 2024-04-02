@@ -98,3 +98,44 @@ template<size_t W, size_t H>
 constexpr void inline State<W,H>::invertPlayer() {
 	players ^= MASK_PLAYER<W,H> & (board | (board >> 1));
 }
+
+template<size_t W, size_t H>
+constexpr size_t inline State<W,H>::countBombs() const {
+	return std::popcount(board & 0x5555555555555555ULL) + 2 * std::popcount(board & 0xAAAAAAAAAAAAAAAAULL);
+}
+
+template<size_t W, size_t H>
+constexpr bool inline State<W,H>::isWon() const {
+	return players == 0;
+}
+
+
+
+template<size_t W, size_t H>
+constexpr void State<W,H>::validate() const {
+	try {
+		if (board & ~((1ULL << (W * H * 2)) - 1))
+			throw std::runtime_error("bombs on invalid cells");
+
+		if (!isWon())
+			for (size_t y = 0; y < H; y++)
+				for (size_t x = 0; x < W; x++) {
+					auto cell = (board >> (y * W * 2 + x * 2)) & 0b11;
+
+					size_t minValue = 0;
+					if (x == 0 || x == W - 1)
+						minValue++;
+					if (y == 0 || y == H - 1)
+						minValue++;
+
+					if (cell < minValue)
+						throw std::runtime_error("invalid cell value");
+				}
+
+		if (players & ~(MASK_PLAYER<W,H> & (board | (board >> 1))))
+			throw std::runtime_error("player bit on invalid cell");
+	} catch (std::exception& e) {
+		std::cout << *this << std::endl;
+		throw e;
+	}
+}

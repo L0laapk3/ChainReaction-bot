@@ -32,4 +32,9 @@ struct State {
 
 	template<bool player, bool quiescence, typename Callable>
 	void iterateMoves(Callable&& callback) const;
+
+	constexpr size_t countBombs() const;
+	constexpr bool isWon() const;
+
+	constexpr void validate() const;
 };
