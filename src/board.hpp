@@ -101,8 +101,13 @@ constexpr void inline State<W,H>::invertPlayer() {
 }
 
 template<size_t W, size_t H>
-constexpr size_t inline State<W,H>::countBombs() const {
+constexpr size_t inline State<W,H>::countBombsRaw() const {
 	return std::popcount(board & 0x5555555555555555ULL) + 2 * std::popcount(board & 0xAAAAAAAAAAAAAAAAULL);
+}
+
+template<size_t W, size_t H>
+constexpr size_t inline State<W,H>::countBombs() const {
+	return countBombsRaw() - defaultState<W,H>.countBombsRaw();
 }
 
 template<size_t W, size_t H>

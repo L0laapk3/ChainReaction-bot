@@ -58,7 +58,7 @@ constexpr FUCKING_INLINE board_t<W,H> State<W,H>::incrCells(board_t<W,H> add) {
 template<size_t W, size_t H>
 template<bool PLAYER>
 constexpr FUCKING_INLINE void State<W,H>::place(board_t<W,H> add) {
-	const auto oldBombCount = countBombs();
+	const auto oldBombCount = countBombsRaw();
 
 	if constexpr (LOG_EXPLOSIONS)
 		std::cout << "adding bomb for player " << PLAYER << *this << BoardPrinter<W,H>(add);
@@ -86,7 +86,7 @@ constexpr FUCKING_INLINE void State<W,H>::place(board_t<W,H> add) {
 		players ^= MASK_PLAYER<W,H> & (board | (board >> 1));
 
 	validate();
-	if (!isWon() && countBombs() != oldBombCount + 1) {
+	if (!isWon() && countBombsRaw() != oldBombCount + 1) {
 		std::cout << *this << std::bitset<64>(board) << std::endl;
 		throw std::runtime_error("bomb count mismatch");
 	}

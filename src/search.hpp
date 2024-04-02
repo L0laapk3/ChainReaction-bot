@@ -52,7 +52,7 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 		foundMove = true;
 		Score score;
 
-		if (newState.isWon())
+		if ((!root || state.countBombs() > 1) && newState.isWon())
 			score = SCORE::WIN;
 		else if (quiescence || remainingDepth - 1 <= 1) // trackDistance: widen the search window so we can subtract one again to penalize for distance
 			score = -negamax<false, true,  penalizeDistance>(newState, -(beta + (beta >= 0 ? penalizeDistance : -penalizeDistance)), -(alpha + (alpha >= 0 ? penalizeDistance : -penalizeDistance)), 1);
@@ -70,9 +70,8 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 		if (score > alpha) {
 			alpha = score;
 			bestMove = move;
-			if (alpha >= beta) {
+			if (alpha >= beta)
 				return true;
-			}
 		}
 		return false;
 	});

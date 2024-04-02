@@ -88,8 +88,8 @@ int main(int, char**) {
 		state.place<0>(1ULL << (result.bestMove * 2));
 		std::cout << state << std::endl;
 		std::cout << result.bestMove << std::endl;
-		if (state.isWon()) {
-			std::cout << "The end :)" << std::endl;
+		if (state.countBombs() > 1 && state.isWon()) {
+			std::cout << "The end :) " << state.countBombs() << std::endl;
 			break;
 		}
 		state.invertPlayer();
