@@ -26,7 +26,6 @@ constexpr Score MUL_POSITION_ADVANTAGE = 1024;
 constexpr Score MUL_PIECE_ADVANTAGE    = 1024 * MUL_POSITION_ADVANTAGE;
 
 
-
 struct ScoreParsed {
 	Score outcome; // win, lose, 0
 	Depth outcomeDistance;

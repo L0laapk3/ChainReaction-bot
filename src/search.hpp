@@ -12,8 +12,13 @@ struct RootResult {
 	Score score;
 	size_t bestMove;
 	bool foundMove;
-	operator Score() const { return score; };
+	explicit operator Score() const { return score; };
 };
+struct SearchResult : public RootResult {
+	int64_t durationUs;
+	Depth depth;
+};
+
 
 template<bool root, bool quiescence, bool penalizeDistance, size_t W, size_t H>
 std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alpha, Score beta, Depth remainingDepth) {
@@ -35,11 +40,12 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 	state.invertPlayer();
 
 	size_t bestMove = -1ULL;
+	size_t bestRootMove = -1ULL;
 	bool foundMove = false;
 	Score bestRootScore = SCORE::MIN;
-	state.template iterateMoves<0, !root && quiescence>([&](const board_t<W,H>& move) {
+	state.template iterateMoves<0, !root && quiescence>([&](size_t move) {
 		auto newState = state;
-		newState.template place<0>(move);
+		newState.template place<0>(1ULL << (2 * move));
 		foundMove = true;
 		Score score;
 		if (quiescence || remainingDepth - 1 <= 1) // trackDistance: widen the search window so we can subtract one again to penalize for distance
@@ -52,6 +58,7 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 
 		if (root && score > bestRootScore) {
 			bestRootScore = score;
+			bestRootMove = move;
 		}
 
 		if (score > alpha) {
@@ -68,14 +75,10 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 		// TT store
 	}
 
-	return RootResult{ alpha, bestMove, foundMove };
+	return (std::conditional_t<root, RootResult, Score>)RootResult{ alpha, bestRootMove, foundMove };
 }
 
 
-struct SearchResult : public RootResult {
-	int64_t durationUs;
-	Depth depth;
-};
 
 template<size_t W, size_t H>
 SearchResult searchDepth(State<W,H> state, Depth depth, bool searchWin, Score alpha, Score beta) {
