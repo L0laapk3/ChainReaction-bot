@@ -185,8 +185,9 @@ int main(int, char**) {
 	}
 
 	auto state = defaultState<W,H>;
+	int ply = 0;
 	while (true) {
-		auto result = search(state, { .depth = 5 });
+		auto result = search(state, { .depth = 9 });
 		if (!result.foundMove) {
 			std::cout << "No moves found" << std::endl;
 			break;
@@ -194,7 +195,7 @@ int main(int, char**) {
 
 		state.place(1ULL << (result.bestMove * 2));
 		std::cout << state << std::endl;
-		std::cout << result.bestMove << std::endl;
+		std::cout << "ply " << ++ply << ": move " << result.bestMove << std::endl;
 		if (state.countBombs() > 1 && state.isWon()) {
 			std::cout << "The end :) " << state.countBombs() << std::endl;
 			break;
