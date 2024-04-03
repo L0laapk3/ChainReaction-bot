@@ -153,7 +153,6 @@ SearchResult search(State<W,H> state, SearchStopCriteria stop, SearchPersistent&
 
 				if (parsedScore.outcome != SCORE::DRAW && parsedScore.outcomeDistance <= depth + 1) {
 					persistent.depth = parsedScore.outcomeDistance - 2; // limit next search depth to mate distance
-					std::cout << "stop at " << persistent.depth << std::endl;
 					goto stopSearchNoDepthSet;
 				}
 				break;

@@ -76,8 +76,7 @@ struct BoardPrinter {
 
 template<size_t W, size_t H>
 std::ostream& operator<<(std::ostream& os, const BoardPrinter<W,H>& board) {
-	constexpr std::array<std::string_view, 4> COLORS = { "\x1B[0m", "\x1B[31m", "\x1B[34m", "\x1B[35m" };
-	os << std::endl;
+	constexpr std::array<std::string_view, 4> COLORS = { "\x1B[0m", "\x1B[34m", "\x1B[31m", "\x1B[35m" };
 	for (size_t i = H; i-- > 0; ) {
 		os << (i ? i - H + 1 ? '|' : '/' : '\\');
 		for (size_t j = W; j-- > 0; ) {

@@ -2,7 +2,7 @@
 
 #include "board.hpp"
 
-#include "xoshiro256ss.h"
+#include "lib/xoshiro256ss.h"
 #include <random>
 
 
