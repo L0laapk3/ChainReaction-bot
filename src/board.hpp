@@ -97,7 +97,8 @@ constexpr State<W,H> defaultState = State<W,H>{ defaultBoard<W,H>, defaultPlayer
 
 template<size_t W, size_t H>
 constexpr void inline State<W,H>::invertPlayer() {
-	players ^= MASK_PLAYER<W,H> & ((board | (board >> 1)) ^ defaultBoard<W,H>);
+	auto boardSub = board ^ defaultBoard<W,H>;
+	players ^= MASK_PLAYER<W,H> & (boardSub | (boardSub >> 1));
 }
 
 template<size_t W, size_t H>
