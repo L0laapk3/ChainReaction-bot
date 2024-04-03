@@ -30,7 +30,7 @@ struct State {
 
 	constexpr Score evaluate() const;
 
-	template<bool player, bool quiescence, typename Callable>
+	template<bool quiescence, typename Callable>
 	void iterateMoves(Callable&& callback) const;
 
 	constexpr size_t countBombsRaw() const;

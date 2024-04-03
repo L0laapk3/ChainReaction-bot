@@ -12,7 +12,7 @@
 
 
 
-constexpr bool LOG_EXPLOSIONS = true;
+constexpr bool LOG_EXPLOSIONS = false;
 
 
 template<size_t W, size_t H>

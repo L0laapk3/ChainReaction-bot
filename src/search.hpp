@@ -38,30 +38,36 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 		// TT lookup
 	}
 
-	state.validate();
-	state.invertPlayer();
-	state.validate();
 
 	size_t bestMove = -1ULL;
 	size_t bestRootMove = -1ULL;
 	bool foundMove = false;
 	Score bestRootScore = SCORE::MIN;
-	state.template iterateMoves<0, !root && quiescence>([&](size_t move) {
+	state.template iterateMoves<!root && quiescence>([&](size_t move) {
 		auto newState = state;
+		// std::cout << "before" << std::endl << state;
 		newState.place(1ULL << (2 * move));
-		newState.validate();
+		// std::cout << "after" << std::endl << state;
 		foundMove = true;
 		Score score;
 
 		if ((!root || state.countBombs() > 1) && newState.isWon())
 			score = SCORE::WIN;
-		else if (quiescence || remainingDepth - 1 <= 1) // trackDistance: widen the search window so we can subtract one again to penalize for distance
-			score = -negamax<false, true,  penalizeDistance>(newState, -(beta + (beta >= 0 ? penalizeDistance : -penalizeDistance)), -(alpha + (alpha >= 0 ? penalizeDistance : -penalizeDistance)), 1);
-		else
-			score = -negamax<false, false, penalizeDistance>(newState, -(beta + (beta >= 0 ? penalizeDistance : -penalizeDistance)), -(alpha + (alpha >= 0 ? penalizeDistance : -penalizeDistance)), remainingDepth - 1);
+		else {
 
-		if (penalizeDistance && score != 0) // move score closer to zero for every move
-			score -= score >= 0 ? 1 : -1;
+			newState.validate();
+			newState.invertPlayer();
+			// std::cout << "afterer" << std::endl << state << std::endl;
+			newState.validate();
+
+			if (quiescence || remainingDepth - 1 <= 1) // trackDistance: widen the search window so we can subtract one again to penalize for distance
+				score = -negamax<false, true,  penalizeDistance>(newState, -(beta + (beta >= 0 ? penalizeDistance : -penalizeDistance)), -(alpha + (alpha >= 0 ? penalizeDistance : -penalizeDistance)), 1);
+			else
+				score = -negamax<false, false, penalizeDistance>(newState, -(beta + (beta >= 0 ? penalizeDistance : -penalizeDistance)), -(alpha + (alpha >= 0 ? penalizeDistance : -penalizeDistance)), remainingDepth - 1);
+
+			if (penalizeDistance && score != 0) // move score closer to zero for every move
+				score -= score >= 0 ? 1 : -1;
+		}
 
 		if (root && score > bestRootScore) {
 			bestRootScore = score;
@@ -181,10 +187,8 @@ SearchResult search(State<W,H> state, SearchStopCriteria stop, SearchPersistent&
 stopSearchNoDepthSet:
 	persistent.depth--; // next search: one less depth
 	printf("Depth: %2d, Score: %s, Time: %ldms\n", depth, scoreToString(result.score).c_str(), usedTime / 1000);
-	if (parsedScore.outcome != SCORE::DRAW && parsedScore.outcomeDistance < depth + 1 && depth > 2) {
-		std::cerr << "bruh momento" << std::endl;
-		std::exit(1);
-	}
+	if (parsedScore.outcome != SCORE::DRAW && parsedScore.outcomeDistance < depth + 1 && depth > 2)
+		throw std::runtime_error("bruh momento");
 
 	result.depth = depth;
 	return result;
