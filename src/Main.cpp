@@ -187,14 +187,18 @@ int main(int, char**) {
 	auto state = defaultState<W,H>;
 	int ply = 0;
 	while (true) {
-		auto result = search(state, { .depth = 9 });
+		auto result = search(state, { .depth = 7 });
 		if (!result.foundMove) {
 			std::cout << "No moves found" << std::endl;
 			break;
 		}
 
 		state.place(1ULL << (result.bestMove * 2));
+		if (ply % 2)
+			state.invertPlayer();
 		std::cout << state << std::endl;
+		if (ply % 2)
+			state.invertPlayer();
 		std::cout << "ply " << ++ply << ": move " << result.bestMove << std::endl;
 		if (state.countBombs() > 1 && state.isWon()) {
 			std::cout << "The end :) " << state.countBombs() << std::endl;

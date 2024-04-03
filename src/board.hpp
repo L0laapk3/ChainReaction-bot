@@ -69,25 +69,34 @@ constexpr auto State<W,H>::operator!=(const State<W,H>& other) const {
 
 template<size_t W, size_t H>
 struct BoardPrinter {
-	explicit BoardPrinter(const board_t<W,H>& v) : value(v) { }
+	explicit BoardPrinter(const board_t<W,H>& v, const board_t<W,H>& c = 0) : value(v), colors(c) { }
 	board_t<W,H> value;
+	board_t<W,H> colors;
 };
 
 template<size_t W, size_t H>
 std::ostream& operator<<(std::ostream& os, const BoardPrinter<W,H>& board) {
+	constexpr std::array<std::string_view, 4> COLORS = { "\x1B[0m", "\x1B[31m", "\x1B[34m", "\x1B[35m" };
 	os << std::endl;
 	for (size_t i = H; i-- > 0; ) {
-		for (size_t j = W; j-- > 0; )
-			os << (((board.value) >> (i * W * 2 + j * 2)) & 0b11);
-		os << std::endl;
+		os << (i ? i - H + 1 ? '|' : '/' : '\\');
+		for (size_t j = W; j-- > 0; ) {
+			os << COLORS[(board.colors >> (i * W * 2 + j * 2)) & 0b11];
+			auto cell = (board.value >> (i * W * 2 + j * 2)) & 0b11;
+			if (cell)
+				os << cell;
+			else
+				os << ' ';
+		}
+		os << COLORS[0] << (i ? i - H + 1 ? '|' : '\\' : '/') << std::endl;
 	}
 	return os;
 }
 template<size_t W, size_t H>
 std::ostream& operator<<(std::ostream& os, const State<W,H>& state) {
-	os << BoardPrinter<W,H>{ state.board - defaultBoard<W,H> };
-	os << "board / players";
-	return os << BoardPrinter<W,H>{ state.players & MASK_PLAYER<W,H> };
+	auto newState = state;
+	newState.invertPlayer();
+	return os << BoardPrinter<W,H>{ state.board - defaultBoard<W,H>, state.players | (newState.players << 1) };
 }
 template<size_t W, size_t H>
 constexpr State<W,H> defaultState = State<W,H>{ defaultBoard<W,H>, defaultPlayers<W,H> };
