@@ -51,5 +51,9 @@
 		"stdexcept": "cpp",
 		"streambuf": "cpp",
 		"typeinfo": "cpp"
+	},
+	"cmake.debugConfig": {
+		"MIMode": "gdb",
+		"miDebuggerPath": "/usr/bin/gdb",
 	}
 }

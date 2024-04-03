@@ -16,12 +16,12 @@ std::pair<size_t, State<W,H>> countUntilCritical(xoshiro256ss& g) {
 	size_t count = 1;
 	while (true) {
 		state.players = MASK_PLAYER<W,H>;
-		state.template place<0>(1ULL << (2 * dist<W,H>(g)));
+		state.place(1ULL << (2 * dist<W,H>(g)));
 		++count;
 
 		for (size_t i = 0; i < W*H; ++i) {
 			State<W,H> newState{ state.board, MASK_PLAYER<W,H> };
-			newState.template place<0>(1ULL << (2 * i));
+			newState.place(1ULL << (2 * i));
 			if (!newState.players)
 				return { count, state };
 		}

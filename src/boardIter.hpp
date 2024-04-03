@@ -10,6 +10,8 @@ inline void State<W,H>::iterateMoves(Callable&& callback) const {
 	if constexpr (quiescence)
 		return;
 	for (int i = 0; i < W*H; ++i) {
+		if (player & (1ULL << (2 * i)))
+			continue;
 		if (callback(i))
 			return;
 	}

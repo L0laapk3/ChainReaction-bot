@@ -24,7 +24,6 @@ struct State {
 	constexpr auto operator!=(const State<W,H>& other) const;
 
 	constexpr board_t<W,H> incrCells(board_t<W,H> add);
-	template<bool PLAYER>
 	constexpr void place(board_t<W,H> add);
 
 	constexpr void invertPlayer();

@@ -12,7 +12,7 @@
 
 
 
-constexpr bool LOG_EXPLOSIONS = false;
+constexpr bool LOG_EXPLOSIONS = true;
 
 
 template<size_t W, size_t H>
@@ -56,14 +56,11 @@ constexpr FUCKING_INLINE board_t<W,H> State<W,H>::incrCells(board_t<W,H> add) {
 
 
 template<size_t W, size_t H>
-template<bool PLAYER>
 constexpr FUCKING_INLINE void State<W,H>::place(board_t<W,H> add) {
 	const auto oldBombCount = countBombsRaw();
 
 	if constexpr (LOG_EXPLOSIONS)
-		std::cout << "adding bomb for player " << PLAYER << *this << BoardPrinter<W,H>(add);
-	if (PLAYER)
-		players ^= MASK_PLAYER<W,H> & (board | (board >> 1));
+		std::cout << "adding bomb" << *this << BoardPrinter<W,H>(add);
 
 	board_t<W,H> exploding = incrCells(add);
 	while (exploding && players) {
@@ -81,9 +78,6 @@ constexpr FUCKING_INLINE void State<W,H>::place(board_t<W,H> add) {
 		exploding |= incrCells((oldExploding << (W * 2)) & ((1ULL << (2 * W * H)) - 1)); // up
 		exploding |= incrCells(oldExploding >> (W * 2)); // down
 	}
-
-	if (PLAYER)
-		players ^= MASK_PLAYER<W,H> & (board | (board >> 1));
 
 	validate();
 	if (!isWon() && countBombsRaw() != oldBombCount + 1) {

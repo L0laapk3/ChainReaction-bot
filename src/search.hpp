@@ -38,6 +38,7 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 		// TT lookup
 	}
 
+	state.validate();
 	state.invertPlayer();
 	state.validate();
 
@@ -47,7 +48,7 @@ std::conditional_t<root, RootResult, Score> negamax(State<W,H> state, Score alph
 	Score bestRootScore = SCORE::MIN;
 	state.template iterateMoves<0, !root && quiescence>([&](size_t move) {
 		auto newState = state;
-		newState.template place<0>(1ULL << (2 * move));
+		newState.place(1ULL << (2 * move));
 		newState.validate();
 		foundMove = true;
 		Score score;
