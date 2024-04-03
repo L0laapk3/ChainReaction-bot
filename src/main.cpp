@@ -37,8 +37,52 @@ void selfPlay(SearchStopCriteria& stop) {
 	}
 }
 
-void cliPlay() {
+void cliPlay(SearchStopCriteria& stop) {
+	auto state = defaultState<W,H>;
+	int ply = 0;
+	while (true) {
+		int move;
+		if (ply % 2 == 0) {
+			while (true) {
+				std::string input;
+				std::cout << "Enter your move: ";
+				std::cin >> input;
 
+				// Convert the chess coordinates to a move
+				int col = H - (input[0] - 'a');
+				int row = input[1] - '1';
+				move = row * W + col;
+
+				if (move < 0 || move >= W*H || (state.players & (1ULL << (2 * move))))
+					std::cout << "Invalid move. Please try again." << std::endl;
+				else
+					break;
+			}
+
+		} else {
+			auto result = search(state, stop);
+			if (!result.foundMove) {
+				std::cout << "No moves found" << std::endl;
+				break;
+			}
+			std::cout << "AI move: " << result.bestMove << std::endl;
+			move = result.bestMove;
+		}
+		state.place(1ULL << (move * 2));
+		ply++;
+		if (ply % 2)
+			state.invertPlayer();
+		std::cout << state;
+		if (ply % 2)
+			state.invertPlayer();
+		if (state.countBombs() > 1 && state.isWon()) {
+			std::cout << "The end :) " << std::endl;
+			break;
+		}
+		state.invertPlayer();
+
+
+	}
 }
 
 
@@ -231,5 +275,5 @@ int main(int argc, char** argv) {
 	auto stop = parseArgs(argc, argv);
 
 	testDumpedGame();
-	selfPlay(stop);
+	cliPlay(stop);
 }

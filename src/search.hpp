@@ -175,7 +175,7 @@ SearchResult search(State<W,H> state, SearchStopCriteria stop, SearchPersistent&
 				widenedAspirationWindow = true;
 			} else
 				break;
-			printf("new window: [%s, %s] %s\n", scoreToString(persistent.alpha).c_str(), scoreToString(persistent.beta).c_str(), scoreToString(result.score).c_str());
+			// printf("new window: [%s, %s] %s\n", scoreToString(persistent.alpha).c_str(), scoreToString(persistent.beta).c_str(), scoreToString(result.score).c_str());
 			// TT: recalculate
 		}
 

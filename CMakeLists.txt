@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9.4)
-project(CRfast VERSION 0.1.0)
+project(CRBot VERSION 0.1.0)
 
 file(GLOB source_files ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
