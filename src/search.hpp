@@ -142,7 +142,7 @@ SearchResult search(State<W,H> state, SearchStopCriteria stop, SearchPersistent&
 		depth++;
 		while (true) {
 			while (true) {
-				(SearchResult&)result = searchDepth(state, depth, searchWin, persistent.alpha, persistent.beta);
+				(SearchResult&)result = searchDepth(state, depth, persistent.searchWin, persistent.alpha, persistent.beta);
 				usedTime += result.durationUs;
 				parsedScore = parseScore(result.score);
 				if ((parsedScore.outcome != SCORE::DRAW) && !persistent.searchWin) {
@@ -187,8 +187,8 @@ SearchResult search(State<W,H> state, SearchStopCriteria stop, SearchPersistent&
 stopSearchNoDepthSet:
 	persistent.depth--; // next search: one less depth
 	printf("Depth: %2d, Score: %s, Time: %ldms\n", depth, scoreToString(result.score).c_str(), usedTime / 1000);
-	if (parsedScore.outcome != SCORE::DRAW && parsedScore.outcomeDistance < depth + 1 && depth > 2)
-		throw std::runtime_error("bruh momento");
+	if (parsedScore.outcome != SCORE::DRAW && parsedScore.outcomeDistance < depth && depth > 2)
+		throw std::runtime_error("Won found in less depth than search depth");
 
 	result.depth = depth;
 	return result;

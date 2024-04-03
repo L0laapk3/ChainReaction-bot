@@ -187,7 +187,7 @@ int main(int, char**) {
 	auto state = defaultState<W,H>;
 	int ply = 0;
 	while (true) {
-		auto result = search(state, { .depth = 7 });
+		auto result = search(state, { .depth = 5 });
 		if (!result.foundMove) {
 			std::cout << "No moves found" << std::endl;
 			break;

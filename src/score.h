@@ -53,7 +53,7 @@ inline std::string scoreToString(ScoreParsed parsed, bool player = 0) {
 		parsed.eval *= -1;
 
 	std::stringstream stream;
-	stream << (parsed.eval > 0 ? "+" : parsed.eval == SCORE::DRAW ? " " : "") << std::fixed << std::setprecision(4) << ((double)parsed.eval / MUL_PIECE_ADVANTAGE);
+	stream << (parsed.eval > 0 ? "+" : parsed.eval == SCORE::DRAW ? " " : "") << std::fixed << std::setprecision(4) << ((double)parsed.eval / MUL_POSITION_ADVANTAGE);
 	return stream.str();
 }
 inline std::string scoreToString(Score score, bool player = 0) {
