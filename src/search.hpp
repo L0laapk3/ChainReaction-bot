@@ -185,7 +185,7 @@ SearchResult search(State<W,H> state, SearchStopCriteria stop, SearchPersistent&
 	persistent.depth = depth;
 stopSearchNoDepthSet:
 	persistent.depth--; // next search: one less depth
-	printf("Depth: %2d, Score: %s, Time: %ldms\n", depth, scoreToString(result.score).c_str(), usedTime / 1000);
+	printf("Depth: %2d, Score: %s, Time: %lldms\n", depth, scoreToString(result.score).c_str(), (unsigned long long)usedTime / 1000);
 	if (parsedScore.outcome != SCORE::DRAW && parsedScore.outcomeDistance < depth && depth > 2)
 		throw std::runtime_error("Won found in less depth than search depth");
 
