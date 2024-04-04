@@ -11,6 +11,8 @@ constexpr size_t W = 6, H = 5;
 
 template<size_t W, size_t H>
 size_t stringToMove(std::string_view str) {
+	if (str.size() != 2)
+		return -1ULL;
 	return (str[1] - '1') * W + (H - (str[0] >= 'a' ? str[0] - 'a' : str[0] - 'A'));
 }
 template<size_t W, size_t H>
@@ -59,7 +61,7 @@ void cliPlay(SearchStopCriteria& stop) {
 				move = stringToMove<W,H>(input);
 
 				if (move < 0 || move >= W*H || (state.players & (1ULL << (2 * move))))
-					std::cout << "Invalid move. Please try again." << move << std::endl;
+					std::cout << "Invalid move. Please try again." << std::endl;
 				else
 					break;
 			}
