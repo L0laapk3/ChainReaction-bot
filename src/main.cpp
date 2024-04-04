@@ -9,6 +9,16 @@ constexpr size_t W = 6, H = 5;
 
 
 
+template<size_t W, size_t H>
+std::string moveToString(size_t move) {
+	static std::string moves = "abcdef";
+	return moves.substr(move % W, 1) + std::to_string(move / W + 1);
+}
+template<size_t W, size_t H>
+size_t stringToMove(std::string_view str) {
+	return (str[1] - '1') * W + (H - (str[0] >= 'a' ? str[0] - 'a' : str[0] - 'A'));
+}
+
 
 void selfPlay(SearchStopCriteria& stop) {
 	auto state = defaultState<W,H>;
@@ -21,7 +31,7 @@ void selfPlay(SearchStopCriteria& stop) {
 		}
 
 		state.place(1ULL << (result.bestMove * 2));
-		std::cout << "ply " << ++ply << ": move " << result.bestMove << std::endl;
+		std::cout << "ply " << ++ply << ": move " << moveToString<W,H>(result.bestMove) << std::endl;
 		if (ply % 2)
 			state.invertPlayer();
 		std::cout << state;
@@ -47,14 +57,10 @@ void cliPlay(SearchStopCriteria& stop) {
 				std::string input;
 				std::cout << "Enter your move: ";
 				std::cin >> input;
-
-				// Convert the chess coordinates to a move
-				int col = H - (input[0] - 'a');
-				int row = input[1] - '1';
-				move = row * W + col;
+				move = stringToMove<W,H>(input);
 
 				if (move < 0 || move >= W*H || (state.players & (1ULL << (2 * move))))
-					std::cout << "Invalid move. Please try again." << std::endl;
+					std::cout << "Invalid move. Please try again." << move << std::endl;
 				else
 					break;
 			}
@@ -65,7 +71,7 @@ void cliPlay(SearchStopCriteria& stop) {
 				std::cout << "No moves found" << std::endl;
 				break;
 			}
-			std::cout << "AI move: " << result.bestMove << std::endl;
+			std::cout << "AI move: " << moveToString<W,H>(result.bestMove) << std::endl;
 			move = result.bestMove;
 		}
 		state.place(1ULL << (move * 2));
