@@ -10,13 +10,12 @@ constexpr size_t W = 6, H = 5;
 
 
 template<size_t W, size_t H>
-std::string moveToString(size_t move) {
-	static std::string moves = "abcdef";
-	return moves.substr(move % W, 1) + std::to_string(move / W + 1);
-}
-template<size_t W, size_t H>
 size_t stringToMove(std::string_view str) {
 	return (str[1] - '1') * W + (H - (str[0] >= 'a' ? str[0] - 'a' : str[0] - 'A'));
+}
+template<size_t W, size_t H>
+std::string moveToString(size_t move) {
+	return std::string(1, 'a' + (H - move % W)) + std::to_string(move / W + 1);
 }
 
 
